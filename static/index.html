@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel文件处理工具</title>
+    <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        .upload-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .upload-box {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .upload-box:hover {
+            border-color: #667eea;
+            background-color: #f8f9ff;
+        }
+        
+        .upload-box.dragover {
+            border-color: #667eea;
+            background-color: #f0f4ff;
+        }
+        
+        .upload-box input[type="file"] {
+            display: none;
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: #ddd;
+            margin-bottom: 15px;
+        }
+        
+        .upload-box:hover .upload-icon {
+            color: #667eea;
+        }
+        
+        .upload-text h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .upload-text p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .file-info {
+            margin-top: 15px;
+            padding: 10px;
+            background: #e8f5e8;
+            border-radius: 8px;
+            color: #2d5a2d;
+            display: none;
+        }
+        
+        .date-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .date-picker-container {
+            display: inline-block;
+            background: #f8f9fa;
+            padding: 20px 30px;
+            border-radius: 15px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        
+        .date-picker-container:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .date-picker-container label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .date-picker-container input[type="date"] {
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            background: white;
+            color: #333;
+            transition: all 0.3s ease;
+            min-width: 200px;
+        }
+        
+        .date-picker-container input[type="date"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .process-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .process-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        
+        .process-btn:enabled {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .process-btn:hover:enabled {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        .loading {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .download-section {
+            display: none;
+            text-align: center;
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+        }
+        
+        .download-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .download-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .result-info {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .upload-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .date-picker-container {
+                padding: 15px 20px;
+                margin: 0 10px;
+            }
+            
+            .date-picker-container input[type="date"] {
+                min-width: 180px;
+                font-size: 0.95rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Excel文件处理工具</h1>
+            <p>上传两个Excel文件，自动比较手机号并添加标签</p>
+        </div>
+        
+        <div class="upload-section">
+            <div class="upload-box" onclick="document.getElementById('file1').click()">
+                <div class="upload-icon">📄</div>
+                <div class="upload-text">
+                    <h3>第一个Excel文件</h3>
+                    <p>点击上传或拖拽文件到此区域<br/>（包含"账号"列）</p>
+                </div>
+                <input type="file" id="file1" accept=".xlsx,.xls" />
+                <div class="file-info" id="file1-info"></div>
+            </div>
+            
+            <div class="upload-box" onclick="document.getElementById('file2').click()">
+                <div class="upload-icon">📄</div>
+                <div class="upload-text">
+                    <h3>第二个Excel文件</h3>
+                    <p>点击上传或拖拽文件到此区域<br/>（包含"手机号"列）</p>
+                </div>
+                <input type="file" id="file2" accept=".xlsx,.xls" />
+                <div class="file-info" id="file2-info"></div>
+            </div>
+        </div>
+        
+        <div class="date-section">
+            <div class="date-picker-container">
+                <label for="processDate">📅 选择处理日期:</label>
+                <input type="date" id="processDate" />
+            </div>
+        </div>
+        
+        <div class="process-section">
+            <button id="processBtn" class="process-btn" disabled>开始处理文件</button>
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>正在处理文件，请稍候...</p>
+            </div>
+        </div>
+        
+        <div id="downloadSection" class="download-section">
+            <div class="result-info">
+                <h3>✅ 处理完成！</h3>
+                <p id="resultStats"></p>
+            </div>
+            <button id="downloadBtn1" class="download-btn">下载 【已匹配】第一个文件</button>
+            <button id="downloadBtn2" class="download-btn">下载 处理后的第二个文件</button>
+        </div>
+    </div>
+
+    <script>
+        let file1Data = null;
+        let file2Data = null;
+        let file1Name = '';
+        let file2Name = '';
+        let processedData1 = null;
+        let processedData2 = null;
+        let selectedDate = '';
+
+        // 初始化日期为今天
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('processDate').value = today;
+            selectedDate = today;
+        });
+
+        // 监听日期变化
+        document.getElementById('processDate').addEventListener('change', function(e) {
+            selectedDate = e.target.value;
+        });
+
+        // 文件上传处理
+        document.getElementById('file1').addEventListener('change', function(e) {
+            handleFileUpload(e.target.files[0], 1);
+        });
+
+        document.getElementById('file2').addEventListener('change', function(e) {
+            handleFileUpload(e.target.files[0], 2);
+        });
+
+        // 拖拽上传支持
+        document.querySelectorAll('.upload-box').forEach((box, index) => {
+            box.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('dragover');
+            });
+
+            box.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+            });
+
+            box.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileUpload(files[0], index + 1);
+                }
+            });
+        });
+
+        function handleFileUpload(file, fileNumber) {
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                if (fileNumber === 1) {
+                    file1Data = jsonData;
+                    file1Name = file.name;
+                    document.getElementById('file1-info').style.display = 'block';
+                    document.getElementById('file1-info').innerHTML = `
+                        ✅ ${file.name}<br>
+                        <small>共 ${jsonData.length} 行数据</small>
+                    `;
+                } else {
+                    file2Data = jsonData;
+                    file2Name = file.name;
+                    document.getElementById('file2-info').style.display = 'block';
+                    document.getElementById('file2-info').innerHTML = `
+                        ✅ ${file.name}<br>
+                        <small>共 ${jsonData.length} 行数据</small>
+                    `;
+                }
+
+                checkProcessReady();
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function checkProcessReady() {
+            const processBtn = document.getElementById('processBtn');
+            if (file1Data && file2Data) {
+                processBtn.disabled = false;
+                processBtn.style.opacity = '1';
+                processBtn.style.pointerEvents = 'all';
+            }
+        }
+
+        // 处理文件逻辑
+        document.getElementById('processBtn').addEventListener('click', function() {
+            if (!file1Data || !file2Data) return;
+
+            // 显示加载状态
+            document.getElementById('loading').style.display = 'block';
+            this.disabled = true;
+
+            setTimeout(() => {
+                processFiles();
+            }, 500);
+        });
+
+        function processFiles() {
+            try {
+                // 检查必要的列是否存在
+                const hasAccountColumn = file1Data.length > 0 && '账号' in file1Data[0];
+                const hasPhoneColumn = file2Data.length > 0 && '手机号' in file2Data[0];
+
+                if (!hasAccountColumn || !hasPhoneColumn) {
+                    alert('未找到指定的列名，请检查第一个文件是否包含"账号"列，第二个文件是否包含"手机号"列。');
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('processBtn').disabled = false;
+                    return;
+                }
+
+                // 提取手机号集合（确保转换为字符串避免类型问题）
+                const phoneNumbers = new Set(file2Data.map(row => String(row['手机号'] || '')));
+                const accountNumbers = new Set(file1Data.map(row => String(row['账号'] || '')));
+
+                // 处理第一个文件：添加匹配标签
+                processedData1 = file1Data.map(row => {
+                    const newRow = {};
+                    // 复制原始数据，确保所有值都是字符串或数字，避免日期转换问题
+                    for (let key in row) {
+                        let value = row[key];
+                        // 如果是日期对象，转换为字符串
+                        if (value instanceof Date) {
+                            value = value.toLocaleDateString('zh-CN');
+                        }
+                        // 如果是数字但看起来像日期序列号，保持原样
+                        newRow[key] = value;
+                    }
+                    // 添加匹配标签
+                    newRow['匹配标签'] = phoneNumbers.has(String(row['账号'] || '')) ? '保留' : '';
+                    return newRow;
+                });
+
+                // 处理第二个文件：添加处理标签
+                processedData2 = file2Data.map(row => {
+                    const newRow = {};
+                    // 复制原始数据，确保所有值都是字符串或数字，避免日期转换问题
+                    for (let key in row) {
+                        let value = row[key];
+                        // 如果是日期对象，转换为字符串
+                        if (value instanceof Date) {
+                            value = value.toLocaleDateString('zh-CN');
+                        }
+                        newRow[key] = value;
+                    }
+                    // 添加处理标签
+                    newRow['处理标签'] = accountNumbers.has(String(row['手机号'] || '')) ? '假数据不处理' : '';
+                    return newRow;
+                });
+
+                // 统计结果
+                const matchedCount1 = processedData1.filter(row => row['匹配标签'] === '保留').length;
+                const matchedCount2 = processedData2.filter(row => row['处理标签'] === '假数据不处理').length;
+
+                console.log('处理完成，准备显示结果'); // 调试信息
+
+                // 显示结果
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('downloadSection').style.display = 'block';
+                document.getElementById('resultStats').innerHTML = `
+                    第一个文件中找到 <strong>${matchedCount1}</strong> 个匹配的账号<br>
+                    第二个文件中找到 <strong>${matchedCount2}</strong> 个匹配的手机号
+                `;
+
+                // 保存匹配结果到数据库
+                saveMatchResultToDatabase(matchedCount1);
+
+            } catch (error) {
+                console.error('处理文件时发生错误:', error); // 调试信息
+                alert('处理文件时发生错误：' + error.message);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('processBtn').disabled = false;
+            }
+        }
+
+        // 下载功能
+        document.getElementById('downloadBtn1').addEventListener('click', function() {
+            // 确保日期格式正确
+            const date = new Date(selectedDate);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const dateStr = `${year}${month}${day}`;
+            
+            const fileName = `【已匹配-${dateStr}】${file1Name}`;
+            console.log('下载文件名:', fileName); // 调试信息
+            downloadExcel(processedData1, fileName);
+        });
+
+        document.getElementById('downloadBtn2').addEventListener('click', function() {
+            // 确保日期格式正确
+            const date = new Date(selectedDate);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const dateStr = `${year}${month}${day}`;
+            
+            const baseName = file2Name.replace(/\.[^/.]+$/, '');
+            const extension = file2Name.includes('.') ? file2Name.split('.').pop() : 'xlsx';
+            const fileName = `【已处理-${dateStr}】${baseName}.${extension}`;
+            console.log('下载文件名:', fileName); // 调试信息
+            downloadExcel(processedData2, fileName);
+        });
+
+        function downloadExcel(data, filename) {
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+            
+            // 确保文件名有正确的扩展名
+            if (!filename.endsWith('.xlsx')) {
+                filename = filename.replace(/\.[^/.]+$/, '') + '.xlsx';
+            }
+            
+            XLSX.writeFile(workbook, filename);
+        }
+
+        // 动态获取API基础地址
+        function getApiBaseUrl() {
+            // 如果是通过frp访问（检测端口8080），则使用当前主机的8080端口
+            if (window.location.port === '8080') {
+                return `${window.location.protocol}//${window.location.hostname}:8080`;
+            }
+            // 否则使用当前主机的5000端口（本地开发）
+            return `${window.location.protocol}//${window.location.hostname}:5000`;
+        }
+
+        const API_BASE_URL = getApiBaseUrl();
+        console.log('API Base URL:', API_BASE_URL);
+
+        // 保存匹配结果到数据库
+        async function saveMatchResultToDatabase(matchedCount) {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    showSaveNotification('⚠️ 请先登录系统', true);
+                    return;
+                }
+                
+                const response = await fetch(`${API_BASE_URL}/api/save-match-result`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        date: selectedDate,
+                        matchedCount: matchedCount
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log('匹配结果已保存到数据库');
+                    // 在界面上显示保存成功的提示
+                    showSaveNotification('✅ 匹配结果已保存到数据库！');
+                } else {
+                    console.error('保存失败:', result.message);
+                    showSaveNotification('❌ 保存失败: ' + result.message, true);
+                }
+            } catch (error) {
+                console.error('保存到数据库时出错:', error);
+                // 如果是网络错误，给出更友好的提示
+                if (error.message.includes('Failed to fetch')) {
+                    showSaveNotification('⚠️ 无法连接到后端服务，请确保Flask服务器已启动', true);
+                } else {
+                    showSaveNotification('❌ 保存失败: ' + error.message, true);
+                }
+            }
+        }
+
+        // 显示保存通知
+        function showSaveNotification(message, isError = false) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                background: ${isError ? '#f8d7da' : '#d4edda'};
+                color: ${isError ? '#721c24' : '#155724'};
+                border: 1px solid ${isError ? '#f5c6cb' : '#c3e6cb'};
+                border-radius: 10px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                z-index: 1000;
+                animation: slideIn 0.3s ease-out;
+            `;
+            notification.textContent = message;
+            
+            // 添加动画样式
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            document.body.appendChild(notification);
+            
+            // 3秒后自动消失
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html> 

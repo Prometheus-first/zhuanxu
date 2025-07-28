@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频工具 - 日活分析</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* 查询控制面板 - 使用更好的网格布局 */
+        .query-panel {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin-bottom: 25px;
+            align-items: end;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        
+        .form-group input, .form-group select {
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        /* 按钮组 */
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+            justify-content: center;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 140px;
+            justify-content: center;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+        
+        .btn-success:hover {
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+        }
+        
+        .btn-info {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        }
+        
+        .btn-info:hover {
+            box-shadow: 0 8px 25px rgba(23, 162, 184, 0.3);
+        }
+        
+        /* 加载状态 */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 统计概览卡片 */
+        .stats-overview {
+            display: none;
+            margin-bottom: 30px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            transition: transform 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card:nth-child(2) {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+        
+        .stat-card:nth-child(3) {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        }
+        
+        .stat-card:nth-child(4) {
+            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+            color: #212529;
+        }
+        
+        .stat-card:nth-child(5) {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stat-label {
+            font-size: 1rem;
+            opacity: 0.95;
+            font-weight: 500;
+        }
+        
+        /* 数据概览区域 */
+        .overview-section {
+            display: none;
+        }
+        
+        .overview-content {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 5px solid #667eea;
+        }
+        
+        .overview-title {
+            color: #333;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .overview-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .overview-item {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .overview-item-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        .overview-item-value {
+            color: #333;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        /* 通知样式 */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+            max-width: 400px;
+            font-weight: 500;
+        }
+        
+        .notification.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .notification.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .notification.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 992px) {
+            .query-panel {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .query-panel {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .overview-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* 模态框样式 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-content h3 {
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+        }
+        
+        /* 进度显示样式 */
+        .progress-section {
+            margin-bottom: 30px;
+        }
+        
+        .progress-log {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .progress-item {
+            margin-bottom: 8px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .progress-item.info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .progress-item.success {
+            background: #e8f5e8;
+            border-left: 4px solid #4caf50;
+        }
+        
+        .progress-item.warning {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+        }
+        
+        .progress-item.error {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+        }
+        
+        .progress-timestamp {
+            color: #666;
+            font-size: 0.8rem;
+            font-weight: bold;
+            min-width: 60px;
+        }
+        
+        .progress-message {
+            flex: 1;
+        }
+        
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 日活分析工具</h1>
+            <p>用户日活跃数据分析与统计概览</p>
+        </div>
+        
+        <!-- 查询控制面板 -->
+        <div class="section">
+            <h2 class="section-title">
+                <span>🔍</span>
+                查询控制面板
+            </h2>
+            
+            <div class="query-panel">
+                <div class="form-group">
+                    <label for="queryType">查询类型:</label>
+                    <select id="queryType" onchange="updateQueryForm()">
+                        <option value="data_summary">数据概览</option>
+                        <option value="date_range">按日期范围查询</option>
+                        <option value="single_date">按单日查询</option>
+                        <option value="user_history">按用户查询历史</option>
+                        <option value="active_summary">获取活跃汇总统计</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="startDateGroup">
+                    <label for="startDate">开始日期:</label>
+                    <input type="date" id="startDate" />
+                </div>
+                
+                <div class="form-group" id="endDateGroup">
+                    <label for="endDate">结束日期:</label>
+                    <input type="date" id="endDate" />
+                </div>
+                
+                <div class="form-group" id="singleDateGroup" style="display: none;">
+                    <label for="singleDate">查询日期:</label>
+                    <input type="date" id="singleDate" />
+                </div>
+                
+                <div class="form-group" id="nicknameGroup" style="display: none;">
+                    <label for="nickname">用户昵称:</label>
+                    <input type="text" id="nickname" placeholder="请输入用户昵称" />
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn" onclick="executeQuery()">
+                    <span>🔍</span> 查询数据
+                </button>
+                <button class="btn btn-success" onclick="exportData()" id="exportBtn" disabled>
+                    <span>📤</span> 导出CSV
+                </button>
+                <button class="btn btn-info" onclick="refreshData()">
+                    <span>🔄</span> 刷新
+                </button>
+                <button class="btn btn-primary" onclick="showDataCollectionModal()" id="dataCollectionBtn">
+                    <span>📥</span> 数据获取
+                </button>
+                <button class="btn btn-warning" onclick="stopDataCollection()" id="stopCollectionBtn" disabled style="display: none;">
+                    <span>⏹️</span> 停止获取
+                </button>
+            </div>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>正在查询数据，请稍候...</p>
+            </div>
+            
+            <!-- 数据获取模态框 -->
+            <div class="modal" id="dataCollectionModal" style="display: none;">
+                <div class="modal-content">
+                    <h3>🔽 数据获取设置</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="totalPages">总页数:</label>
+                            <input type="number" id="totalPages" value="500" min="1" max="1000">
+                        </div>
+                        <div class="form-group">
+                            <label for="batchSize">批次大小:</label>
+                            <input type="number" id="batchSize" value="20" min="1" max="50">
+                        </div>
+                        <div class="form-group">
+                            <label for="collectUsername">用户名:</label>
+                            <input type="text" id="collectUsername" value="admin">
+                        </div>
+                        <div class="form-group">
+                            <label for="collectPassword">密码:</label>
+                            <input type="password" id="collectPassword" value="admin@liandanxia">
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="startDataCollection()">
+                            <span>🚀</span> 开始获取
+                        </button>
+                        <button class="btn" onclick="closeDataCollectionModal()">
+                            <span>❌</span> 取消
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 数据获取进度显示 -->
+            <div class="progress-section" id="progressSection" style="display: none;">
+                <div class="section">
+                    <h2 class="section-title">
+                        <span>⚡</span>
+                        数据获取进度
+                        <button class="btn btn-sm" onclick="toggleProgressSection()" style="margin-left: auto;">
+                            <span id="progressToggleIcon">➖</span>
+                        </button>
+                    </h2>
+                    <div class="progress-content" id="progressContent">
+                        <div class="progress-log" id="progressLog">
+                            <!-- 进度信息将在这里显示 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 统计概览 -->
+        <div class="stats-overview" id="statsOverview">
+            <div class="section">
+                <h2 class="section-title">
+                    <span>📈</span>
+                    数据统计
+                </h2>
+                <div class="stats-grid" id="statsGrid">
+                    <!-- 统计卡片将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- 数据概览 -->
+        <div class="section overview-section" id="overviewSection">
+            <h2 class="section-title">
+                <span>📋</span>
+                详细概览
+            </h2>
+            <div class="overview-content">
+                <div class="overview-title">
+                    <span>📊</span>
+                    统计信息
+                </div>
+                <div class="overview-stats" id="overviewStats">
+                    <!-- 概览统计将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentData = null;
+        let currentQueryType = 'data_summary';
+        
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDateInputs();
+            updateQueryForm();
+            // 自动执行数据概览查询
+            executeQuery();
+        });
+        
+        // 初始化日期输入框
+        function initializeDateInputs() {
+            const today = new Date();
+            const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+            
+            document.getElementById('startDate').value = lastWeek.toISOString().split('T')[0];
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+            document.getElementById('singleDate').value = today.toISOString().split('T')[0];
+        }
+        
+        // 更新查询表单
+        function updateQueryForm() {
+            currentQueryType = document.getElementById('queryType').value;
+            
+            // 隐藏所有表单组
+            document.getElementById('startDateGroup').style.display = 'none';
+            document.getElementById('endDateGroup').style.display = 'none';
+            document.getElementById('singleDateGroup').style.display = 'none';
+            document.getElementById('nicknameGroup').style.display = 'none';
+            
+            // 根据查询类型显示相应的表单组
+            switch(currentQueryType) {
+                case 'data_summary':
+                    // 数据概览可选择日期范围
+                    document.getElementById('startDateGroup').style.display = 'block';
+                    document.getElementById('endDateGroup').style.display = 'block';
+                    break;
+                case 'date_range':
+                case 'active_summary':
+                    document.getElementById('startDateGroup').style.display = 'block';
+                    document.getElementById('endDateGroup').style.display = 'block';
+                    break;
+            }
+        }
+        
+        // 执行查询
+        async function executeQuery() {
+            const loading = document.getElementById('loading');
+            const statsOverview = document.getElementById('statsOverview');
+            const overviewSection = document.getElementById('overviewSection');
+            
+            // 显示加载状态
+            loading.style.display = 'block';
+            statsOverview.style.display = 'none';
+            overviewSection.style.display = 'none';
+            
+            try {
+                currentQueryType = document.getElementById('queryType').value;
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                
+                let url = '/api/video-active/';
+                let params = new URLSearchParams();
+                
+                switch(currentQueryType) {
+                    case 'data_summary':
+                        url += 'data-summary';
+                        if (startDate) params.append('start_date', startDate);
+                        if (endDate) params.append('end_date', endDate);
+                        break;
+                    case 'date_range':
+                        url += 'date-range';
+                        params.append('start_date', startDate);
+                        params.append('end_date', endDate);
+                        break;
+                    case 'single_date':
+                        url += 'single-date';
+                        params.append('single_date', document.getElementById('singleDate').value);
+                        break;
+                    case 'user_history':
+                        url += 'user-history';
+                        params.append('nickname', document.getElementById('nickname').value);
+                        break;
+                    case 'active_summary':
+                        url += 'active-summary';
+                        params.append('start_date', startDate);
+                        params.append('end_date', endDate);
+                        break;
+                }
+                
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${url}?${params}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentData = result.data;
+                    displayResults(result.data);
+                    document.getElementById('exportBtn').disabled = false;
+                    showNotification('查询成功！', 'success');
+                } else {
+                    showNotification(result.message || '查询失败', 'error');
+                }
+                
+            } catch (error) {
+                console.error('查询失败:', error);
+                showNotification('查询失败: ' + error.message, 'error');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        
+        // 显示查询结果
+        function displayResults(data) {
+            const statsOverview = document.getElementById('statsOverview');
+            const overviewSection = document.getElementById('overviewSection');
+            
+            statsOverview.style.display = 'block';
+            overviewSection.style.display = 'block';
+            
+            // 根据查询类型显示不同的结果
+            switch(currentQueryType) {
+                case 'data_summary':
+                    displayDataSummary(data);
+                    break;
+                case 'date_range':
+                case 'single_date':
+                case 'user_history':
+                    displayTableData(data);
+                    break;
+                case 'active_summary':
+                    displayActiveSummary(data);
+                    break;
+            }
+        }
+        
+        // 显示数据概览
+        function displayDataSummary(data) {
+            if (data.message) {
+                document.getElementById('overviewStats').innerHTML = `
+                    <div class="overview-item" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                        <div style="font-size: 3rem; margin-bottom: 15px; color: #666;">📭</div>
+                        <div style="color: #666; font-size: 1.1rem;">${data.message}</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 显示统计卡片
+            const statsGrid = document.getElementById('statsGrid');
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${data.total_records}</div>
+                    <div class="stat-label">总记录数</div>
+                </div>
+            `;
+            
+            if (data.date_range) {
+                statsGrid.innerHTML += `
+                    <div class="stat-card">
+                        <div class="stat-number">${data.date_range.start}</div>
+                        <div class="stat-label">开始日期</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${data.date_range.end}</div>
+                        <div class="stat-label">结束日期</div>
+                    </div>
+                `;
+            }
+            
+            // 显示每日统计概览
+            if (data.daily_stats && data.daily_stats.length > 0) {
+                const overviewStats = document.getElementById('overviewStats');
+                overviewStats.innerHTML = '';
+                
+                data.daily_stats.forEach(stat => {
+                    overviewStats.innerHTML += `
+                        <div class="overview-item">
+                            <div class="overview-item-label">${stat.date}</div>
+                            <div class="overview-item-value">${stat.unique_user_count} 用户 / ${stat.total_usage} 次使用</div>
+                        </div>
+                    `;
+                });
+            }
+        }
+        
+        // 显示表格数据
+        function displayTableData(data) {
+            if (!data || data.length === 0) {
+                const statsGrid = document.getElementById('statsGrid');
+                statsGrid.innerHTML = `
+                    <div class="stat-card" style="grid-column: 1 / -1; text-align: center; background: #f8f9fa; color: #666;">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">📭</div>
+                        <div style="font-size: 1.2rem;">暂无数据</div>
+                    </div>
+                `;
+                
+                const overviewStats = document.getElementById('overviewStats');
+                overviewStats.innerHTML = `
+                    <div class="overview-item" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                        <div style="color: #666; font-size: 1.1rem;">没有找到匹配的数据</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 显示基本统计
+            const statsGrid = document.getElementById('statsGrid');
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${data.length}</div>
+                    <div class="stat-label">总记录数</div>
+                </div>
+            `;
+            
+            // 根据数据类型显示不同的统计信息
+            if (data[0] && data[0].nickname) {
+                const uniqueUsers = new Set(data.map(item => item.nickname)).size;
+                statsGrid.innerHTML += `
+                    <div class="stat-card">
+                        <div class="stat-number">${uniqueUsers}</div>
+                        <div class="stat-label">独立用户</div>
+                    </div>
+                `;
+            }
+            
+            if (data[0] && data[0].total_usage_count) {
+                const totalUsage = data.reduce((sum, item) => sum + (item.total_usage_count || 0), 0);
+                statsGrid.innerHTML += `
+                    <div class="stat-card">
+                        <div class="stat-number">${totalUsage}</div>
+                        <div class="stat-label">总使用次数</div>
+                    </div>
+                `;
+            }
+            
+            // 显示详细数据表格
+            const overviewStats = document.getElementById('overviewStats');
+            overviewStats.innerHTML = '';
+            
+            // 只显示前20条记录，避免界面过于拥挤
+            const displayData = data.slice(0, 20);
+            displayData.forEach((item, index) => {
+                let displayText = '';
+                
+                if (item.nickname && item.date) {
+                    // 用户日活跃数据
+                    displayText = `${item.nickname} - ${item.date} (${item.total_usage_count || 0}次使用)`;
+                } else if (item.tool_type) {
+                    // 工具数据
+                    displayText = `${item.nickname} - ${item.tool_type} - ${item.date} (${item.usage_count || 0}次)`;
+                } else {
+                    // 其他数据
+                    displayText = JSON.stringify(item).substring(0, 100) + '...';
+                }
+                
+                overviewStats.innerHTML += `
+                    <div class="overview-item">
+                        <div class="overview-item-label">${index + 1}</div>
+                        <div class="overview-item-value">${displayText}</div>
+                    </div>
+                `;
+            });
+            
+            if (data.length > 20) {
+                overviewStats.innerHTML += `
+                    <div class="overview-item" style="grid-column: 1 / -1; text-align: center; color: #666; font-style: italic;">
+                        <div class="overview-item-value">... 还有 ${data.length - 20} 条记录未显示，请使用导出功能查看完整数据</div>
+                    </div>
+                `;
+            }
+        }
+        
+        // 显示活跃汇总
+        function displayActiveSummary(data) {
+            // 显示统计卡片
+            const statsGrid = document.getElementById('statsGrid');
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${data.unique_users}</div>
+                    <div class="stat-label">独立用户</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${data.unique_dates}</div>
+                    <div class="stat-label">活跃天数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${data.total_usage}</div>
+                    <div class="stat-label">总使用次数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${data.success_rate}</div>
+                    <div class="stat-label">成功率</div>
+                </div>
+            `;
+            
+            // 显示简化的概览信息
+            const overviewStats = document.getElementById('overviewStats');
+            overviewStats.innerHTML = `
+                <div class="overview-item">
+                    <div class="overview-item-label">统计期间</div>
+                    <div class="overview-item-value">${data.period}</div>
+                </div>
+                <div class="overview-item">
+                    <div class="overview-item-label">总记录数</div>
+                    <div class="overview-item-value">${data.total_records}</div>
+                </div>
+                <div class="overview-item">
+                    <div class="overview-item-label">成功次数</div>
+                    <div class="overview-item-value">${data.total_success}</div>
+                </div>
+                <div class="overview-item">
+                    <div class="overview-item-label">失败次数</div>
+                    <div class="overview-item-value">${data.total_fail}</div>
+                </div>
+            `;
+        }
+        
+        // 显示多工具对比
+        
+        // 导出数据
+        async function exportData() {
+            if (!currentData) {
+                showNotification('没有可导出的数据', 'error');
+                return;
+            }
+            
+            try {
+                const queryType = document.getElementById('queryType').value;
+                const params = new URLSearchParams({
+                    query_type: queryType
+                });
+                
+                // 根据查询类型添加不同的参数
+                switch(queryType) {
+                    case 'data_summary':
+                    case 'date_range':
+                    case 'active_summary':
+                    case 'multi_tool':
+                        const startDate = document.getElementById('startDate').value;
+                        const endDate = document.getElementById('endDate').value;
+                        if (!startDate || !endDate) {
+                            showNotification('请选择日期范围', 'error');
+                            return;
+                        }
+                        params.append('start_date', startDate);
+                        params.append('end_date', endDate);
+                        break;
+                    case 'single_date':
+                        const singleDate = document.getElementById('singleDate').value;
+                        if (!singleDate) {
+                            showNotification('请选择查询日期', 'error');
+                            return;
+                        }
+                        params.append('single_date', singleDate);
+                        break;
+                    case 'user_history':
+                        const nickname = document.getElementById('nickname').value;
+                        if (!nickname) {
+                            showNotification('请输入用户昵称', 'error');
+                            return;
+                        }
+                        params.append('nickname', nickname);
+                        break;
+                }
+                
+                const downloadUrl = `/api/video-active/export-csv?${params}`;
+                
+                // 使用fetch下载然后创建blob
+                const token = localStorage.getItem('token');
+                const response = await fetch(downloadUrl, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.style.display = 'none';
+                    
+                    // 从响应头获取文件名，或使用默认文件名
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    let filename = 'export_data.csv';
+                    if (contentDisposition) {
+                        const matches = contentDisposition.match(/filename="?([^"]+)"?/);
+                        if (matches) {
+                            filename = matches[1];
+                        }
+                    }
+                    
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    // 清理URL对象
+                    window.URL.revokeObjectURL(url);
+                    
+                    showNotification('导出成功！文件已开始下载', 'success');
+                } else {
+                    const errorData = await response.json();
+                    showNotification(errorData.message || '导出失败', 'error');
+                }
+                
+            } catch (error) {
+                showNotification('导出失败: ' + error.message, 'error');
+            }
+        }
+        
+        // 刷新数据
+        function refreshData() {
+            executeQuery();
+        }
+        
+        // 显示通知
+        function showNotification(message, type = 'success') {
+            // 移除现有通知
+            const existingNotifications = document.querySelectorAll('.notification');
+            existingNotifications.forEach(n => n.remove());
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="font-size: 1.2rem;">${icon}</div>
+                    <div>${message}</div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // 点击关闭
+            notification.addEventListener('click', () => {
+                notification.remove();
+            });
+            
+            // 自动关闭
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+        
+        // ============ 数据获取功能 ============
+        
+        let dataCollectionEventSource = null;
+        let isDataCollectionRunning = false;
+        
+        // 显示数据获取模态框
+        function showDataCollectionModal() {
+            document.getElementById('dataCollectionModal').style.display = 'flex';
+        }
+        
+        // 关闭数据获取模态框
+        function closeDataCollectionModal() {
+            document.getElementById('dataCollectionModal').style.display = 'none';
+        }
+        
+        // 启动数据获取
+        async function startDataCollection() {
+            const totalPages = parseInt(document.getElementById('totalPages').value);
+            const batchSize = parseInt(document.getElementById('batchSize').value);
+            const username = document.getElementById('collectUsername').value;
+            const password = document.getElementById('collectPassword').value;
+            
+            if (!totalPages || !batchSize || !username || !password) {
+                showNotification('请填写完整的获取参数', 'error');
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('token');
+                
+                // 获取查询面板中的日期范围
+                const startDateInput = document.getElementById('startDate');
+                const endDateInput = document.getElementById('endDate');
+                const filterStartDate = startDateInput ? startDateInput.value : null;
+                const filterEndDate = endDateInput ? endDateInput.value : null;
+                
+                const requestBody = {
+                    total_pages: totalPages,
+                    batch_size: batchSize,
+                    username: username,
+                    password: password
+                };
+                
+                // 如果选择了日期范围，则添加过滤参数
+                if (filterStartDate && filterEndDate) {
+                    requestBody.filter_start_date = filterStartDate;
+                    requestBody.filter_end_date = filterEndDate;
+                    console.log(`数据获取将使用日期过滤: ${filterStartDate} 到 ${filterEndDate}`);
+                } else {
+                    console.log('未设置日期过滤，将获取所有日期的数据');
+                }
+                
+                const response = await fetch('/api/video-active/start-data-collection', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('数据获取已启动', 'success');
+                    closeDataCollectionModal();
+                    
+                    // 显示进度区域
+                    document.getElementById('progressSection').style.display = 'block';
+                    document.getElementById('progressLog').innerHTML = '';
+                    
+                    // 更新按钮状态
+                    document.getElementById('dataCollectionBtn').disabled = true;
+                    document.getElementById('stopCollectionBtn').style.display = 'inline-block';
+                    document.getElementById('stopCollectionBtn').disabled = false;
+                    
+                    // 开始接收进度更新
+                    startProgressUpdates();
+                    isDataCollectionRunning = true;
+                    
+                } else {
+                    showNotification(result.message || '启动数据获取失败', 'error');
+                }
+                
+            } catch (error) {
+                console.error('启动数据获取失败:', error);
+                showNotification('启动数据获取失败: ' + error.message, 'error');
+            }
+        }
+        
+        // 停止数据获取
+        async function stopDataCollection() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/video-active/stop-data-collection', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('停止指令已发送', 'warning');
+                } else {
+                    showNotification(result.message || '停止数据获取失败', 'error');
+                }
+                
+            } catch (error) {
+                console.error('停止数据获取失败:', error);
+                showNotification('停止数据获取失败: ' + error.message, 'error');
+            }
+        }
+        
+        // 开始接收进度更新
+        function startProgressUpdates() {
+            if (dataCollectionEventSource) {
+                dataCollectionEventSource.close();
+            }
+            
+            // EventSource不支持自定义头，所以我们使用轮询方式获取进度
+            startProgressPolling();
+        }
+        
+        // 轮询方式获取进度
+        function startProgressPolling() {
+            const pollInterval = setInterval(async () => {
+                if (!isDataCollectionRunning) {
+                    clearInterval(pollInterval);
+                    return;
+                }
+                
+                // 获取进度信息
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await fetch('/api/video-active/collection-progress-poll', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        if (result.success && result.messages && result.messages.length > 0) {
+                            // 重置空消息计数器
+                            window.emptyMessageCount = 0;
+                            window.statusCheckCount = 0;
+                            
+                            // 处理所有累积的消息
+                            for (const progressInfo of result.messages) {
+                                addProgressItem(progressInfo);
+                                
+                                // 只有收到明确的结束消息才停止
+                                if (progressInfo.message && 
+                                    progressInfo.message.includes('数据采集任务结束')) {
+                                    clearInterval(pollInterval);
+                                    stopProgressUpdates();
+                                    return;
+                                }
+                            }
+                        } else {
+                            // 如果没有新消息，等待更长时间再检查后端状态
+                            if (!window.emptyMessageCount) {
+                                window.emptyMessageCount = 1;
+                            } else {
+                                window.emptyMessageCount++;
+                            }
+                            
+                            // 只有连续5次没有消息才检查后端状态
+                            if (window.emptyMessageCount >= 5) {
+                                try {
+                                    const statusResponse = await fetch('/api/video-active/collection-status', {
+                                        headers: {
+                                            'Authorization': `Bearer ${token}`
+                                        }
+                                    });
+                                    
+                                    if (statusResponse.ok) {
+                                        const statusResult = await statusResponse.json();
+                                        // 只有在连续多次检查都显示未运行时才停止
+                                        if (!statusResult.is_running) {
+                                            if (!window.statusCheckCount) {
+                                                window.statusCheckCount = 1;
+                                            } else {
+                                                window.statusCheckCount++;
+                                            }
+                                            
+                                            // 连续3次检查都显示未运行才真正停止
+                                            if (window.statusCheckCount >= 3) {
+                                                addProgressItem({
+                                                    message: '🔚 后端任务已结束，停止进度监控',
+                                                    level: 'info',
+                                                    timestamp: new Date().toLocaleTimeString()
+                                                });
+                                                
+                                                clearInterval(pollInterval);
+                                                stopProgressUpdates();
+                                                return;
+                                            }
+                                        } else {
+                                            // 重置计数器
+                                            window.statusCheckCount = 0;
+                                            window.emptyMessageCount = 0;
+                                        }
+                                    }
+                                } catch (statusError) {
+                                    console.error('检查状态失败:', statusError);
+                                }
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('获取进度失败:', error);
+                }
+            }, 1000); // 每1秒轮询一次
+            
+            // 保存interval ID以便后续清理
+            window.progressPollingInterval = pollInterval;
+        }
+        
+        // 停止进度更新
+        function stopProgressUpdates() {
+            if (dataCollectionEventSource) {
+                dataCollectionEventSource.close();
+                dataCollectionEventSource = null;
+            }
+            
+            // 清理轮询间隔
+            if (window.progressPollingInterval) {
+                clearInterval(window.progressPollingInterval);
+                window.progressPollingInterval = null;
+            }
+            
+            // 重置按钮状态
+            document.getElementById('dataCollectionBtn').disabled = false;
+            document.getElementById('stopCollectionBtn').style.display = 'none';
+            document.getElementById('stopCollectionBtn').disabled = true;
+            
+            isDataCollectionRunning = false;
+        }
+        
+        // 添加进度项到日志
+        function addProgressItem(progressInfo) {
+            const progressLog = document.getElementById('progressLog');
+            const progressItem = document.createElement('div');
+            progressItem.className = `progress-item ${progressInfo.level || 'info'}`;
+            
+            progressItem.innerHTML = `
+                <span class="progress-timestamp">${progressInfo.timestamp}</span>
+                <span class="progress-message">${progressInfo.message}</span>
+            `;
+            
+            progressLog.appendChild(progressItem);
+            
+            // 自动滚动到底部
+            progressLog.scrollTop = progressLog.scrollHeight;
+            
+            // 限制日志条目数量（保留最新的100条）
+            const items = progressLog.querySelectorAll('.progress-item');
+            if (items.length > 100) {
+                items[0].remove();
+            }
+        }
+        
+        // 切换进度区域显示/隐藏
+        function toggleProgressSection() {
+            const progressContent = document.getElementById('progressContent');
+            const toggleIcon = document.getElementById('progressToggleIcon');
+            
+            if (progressContent.style.display === 'none') {
+                progressContent.style.display = 'block';
+                toggleIcon.textContent = '➖';
+            } else {
+                progressContent.style.display = 'none';
+                toggleIcon.textContent = '➕';
+            }
+        }
+        
+        // 页面加载时检查数据获取状态
+        async function checkDataCollectionStatus() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/video-active/collection-status', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.is_running) {
+                    // 如果有正在运行的任务，恢复进度显示
+                    document.getElementById('progressSection').style.display = 'block';
+                    document.getElementById('dataCollectionBtn').disabled = true;
+                    document.getElementById('stopCollectionBtn').style.display = 'inline-block';
+                    document.getElementById('stopCollectionBtn').disabled = false;
+                    
+                    isDataCollectionRunning = true;
+                    startProgressUpdates();
+                }
+                
+            } catch (error) {
+                console.error('检查数据获取状态失败:', error);
+            }
+        }
+        
+        // 页面初始化时检查状态
+        document.addEventListener('DOMContentLoaded', function() {
+            // 延迟检查状态，确保页面完全加载
+            setTimeout(checkDataCollectionStatus, 1000);
+        });
+        
+        // 页面卸载时关闭SSE连接
+        window.addEventListener('beforeunload', function() {
+            if (dataCollectionEventSource) {
+                dataCollectionEventSource.close();
+            }
+        });
+    </script>
+</body>
+</html>

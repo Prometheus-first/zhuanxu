@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>颛顼</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding-top: 60px;
+        }
+        
+        /* 顶部导航栏 */
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1001;
+        }
+        
+        .navbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+        }
+        
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        
+        .navbar-user {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            background: white;
+            color: #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .user-details {
+            text-align: right;
+        }
+        
+        .user-name {
+            font-weight: 600;
+        }
+        
+        .user-role {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+        
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        /* 侧边导航栏 */
+        .sidebar {
+            background: white;
+            width: 250px;
+            height: calc(100vh - 60px);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            position: fixed;
+            left: 0;
+            top: 60px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        
+        .nav-menu {
+            padding: 20px 0;
+        }
+        
+        .nav-section {
+            margin-bottom: 30px;
+        }
+        
+        .nav-section-title {
+            color: #999;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            padding: 0 20px;
+            margin-bottom: 10px;
+        }
+        
+        .nav-item {
+            display: block;
+            padding: 12px 20px;
+            color: #333;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-item:hover {
+            background: #f8f9fa;
+            color: #667eea;
+            border-left-color: #667eea;
+        }
+        
+        .nav-item.active {
+            background: #f0f4ff;
+            color: #667eea;
+            border-left-color: #667eea;
+            font-weight: 600;
+        }
+        
+        .nav-item i {
+            margin-right: 10px;
+            width: 20px;
+            display: inline-block;
+        }
+        
+        /* 主内容区域 */
+        .main-content {
+            margin-left: 250px;
+            padding: 30px;
+            min-height: calc(100vh - 60px);
+            position: relative;
+        }
+        
+        .content-header {
+            margin-bottom: 30px;
+        }
+        
+        .content-title {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .content-subtitle {
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        /* 卡片样式 */
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+        
+        .card-title {
+            font-size: 1.3rem;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .stat-icon.blue {
+            background: #e3f2fd;
+            color: #2196f3;
+        }
+        
+        .stat-icon.green {
+            background: #e8f5e9;
+            color: #4caf50;
+        }
+        
+        .stat-icon.orange {
+            background: #fff3e0;
+            color: #ff9800;
+        }
+        
+        .stat-icon.purple {
+            background: #f3e5f5;
+            color: #9c27b0;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.95rem;
+        }
+        
+        /* 快捷操作按钮 */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .action-btn {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #333;
+            display: block;
+        }
+        
+        .action-btn:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+            transform: translateY(-2px);
+        }
+        
+        .action-btn i {
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .action-btn-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .action-btn-desc {
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                z-index: 1002;
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            /* 移动端汉堡菜单按钮 */
+            .mobile-menu-btn {
+                display: block;
+                background: none;
+                border: none;
+                color: white;
+                font-size: 1.5rem;
+                cursor: pointer;
+            }
+        }
+        
+        /* 桌面端隐藏汉堡菜单 */
+        .mobile-menu-btn {
+            display: none;
+        }
+        
+        /* 加载动画 */
+        .loading-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+        }
+        
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+                🏢 颛顼
+            </div>
+            <div class="navbar-user">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">用户名</div>
+                        <div class="user-role" id="userRole">角色</div>
+                    </div>
+                </div>
+                <button class="logout-btn" onclick="logout()">退出登录</button>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- 侧边导航 -->
+    <aside class="sidebar" id="sidebar">
+        <nav class="nav-menu" id="navMenu">
+            <!-- 导航菜单将根据用户角色动态生成 -->
+        </nav>
+    </aside>
+    
+    <!-- 主内容区 -->
+    <main class="main-content" id="mainContent">
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+        </div>
+    </main>
+    
+    <script>
+        // 全局变量
+        let currentUser = null;
+        let currentView = 'home';
+        
+        // 动态获取API基础地址
+        function getApiBaseUrl() {
+            // 如果是通过frp访问（检测端口8080），则使用当前主机的8080端口
+            if (window.location.port === '8080') {
+                return `${window.location.protocol}//${window.location.hostname}:8080`;
+            }
+            // 否则使用当前主机的5000端口（本地开发）
+            return `${window.location.protocol}//${window.location.hostname}:5000`;
+        }
+
+        const API_BASE_URL = getApiBaseUrl();
+        console.log('API Base URL:', API_BASE_URL);
+
+        // 页面初始化
+        async function init() {
+            // 检查登录状态
+            const token = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+            
+            if (!token || !userStr) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            // 解析用户信息
+            currentUser = JSON.parse(userStr);
+            
+            // 验证令牌
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('令牌无效');
+                }
+                
+                // 更新用户界面
+                updateUserInfo();
+                
+                // 生成导航菜单
+                generateNavMenu();
+                
+                // 加载默认视图
+                loadView('home');
+                
+            } catch (error) {
+                console.error('验证失败:', error);
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login.html';
+            }
+        }
+        
+        // 更新用户信息显示
+        function updateUserInfo() {
+            document.getElementById('userAvatar').textContent = currentUser.real_name[0];
+            document.getElementById('userName').textContent = currentUser.real_name;
+            document.getElementById('userRole').textContent = getRoleDisplayName(currentUser.role);
+        }
+        
+        // 获取角色显示名称
+        function getRoleDisplayName(role) {
+            const roleNames = {
+                'admin': '系统管理员',
+                'leader': '部门领导',
+                'employee': '员工'
+            };
+            return roleNames[role] || role;
+        }
+        
+        // 生成导航菜单
+        function generateNavMenu() {
+            const navMenu = document.getElementById('navMenu');
+            let menuHTML = '';
+            
+            // 通用菜单
+            menuHTML += `
+                <div class="nav-section">
+                    <div class="nav-section-title">通用功能</div>
+                    <a class="nav-item" onclick="loadView('home')">
+                        <i>🏠</i> 首页
+                    </a>
+                    <a class="nav-item" onclick="loadView('profile')">
+                        <i>👤</i> 个人信息
+                    </a>
+                </div>
+            `;
+            
+            // 根据角色添加菜单
+            if (currentUser.role === 'admin') {
+                menuHTML += `
+                    <div class="nav-section">
+                        <div class="nav-section-title">系统管理</div>
+                        <a class="nav-item" onclick="loadView('user-management')">
+                            <i>👥</i> 用户管理
+                        </a>
+                        <a class="nav-item" onclick="loadView('system')">
+                            <i>⚙️</i> 系统设置
+                        </a>
+                    </div>
+                `;
+            }
+            
+            if (currentUser.role === 'leader') {
+                menuHTML += `
+                    <div class="nav-section">
+                        <div class="nav-section-title">领导功能</div>
+                        <a class="nav-item" onclick="loadView('reports')">
+                            <i>📊</i> 数据报表
+                        </a>
+                        <a class="nav-item" onclick="loadView('employees')">
+                            <i>👨‍💼</i> 员工管理
+                        </a>
+                        <a class="nav-item" onclick="loadView('analytics')">
+                            <i>📈</i> 数据分析
+                        </a>
+                    </div>
+                `;
+            }
+            
+            if (currentUser.role === 'employee') {
+                menuHTML += `
+                    <div class="nav-section">
+                        <div class="nav-section-title">业务功能</div>
+                `;
+                
+                // 张童义森的特殊功能
+                if (currentUser.username === 'zhangtongyi') {
+                    menuHTML += `
+                        <a class="nav-item" onclick="loadView('excel-match')">
+                            <i>📊</i> Excel匹配工具
+                        </a>
+                        <a class="nav-item" onclick="loadView('daily-active-analysis')">
+                            <i>📊</i> 日活分析
+                        </a>
+                    `;
+                }
+                
+                menuHTML += `
+                        <a class="nav-item" onclick="loadView('my-data')">
+                            <i>📁</i> 我的数据
+                        </a>
+                        <a class="nav-item" onclick="loadView('history')">
+                            <i>📜</i> 操作历史
+                        </a>
+                    </div>
+                `;
+            }
+            
+            navMenu.innerHTML = menuHTML;
+        }
+        
+        // 加载视图
+        async function loadView(view) {
+            currentView = view;
+            const mainContent = document.getElementById('mainContent');
+            
+            // 更新导航激活状态
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.textContent.includes(getViewName(view))) {
+                    item.classList.add('active');
+                }
+            });
+            
+            // 根据视图加载内容
+            switch(view) {
+                case 'home':
+                    loadHomeView();
+                    break;
+                case 'excel-match':
+                    loadExcelMatchView();
+                    break;
+                case 'daily-active-analysis':
+                    loadDailyActiveAnalysisView();
+                    break;
+                case 'user-management':
+                    loadUserManagementView();
+                    break;
+                case 'reports':
+                    loadReportsView();
+                    break;
+                case 'profile':
+                    loadProfileView();
+                    break;
+                default:
+                    loadComingSoonView(view);
+            }
+        }
+        
+        // 加载首页视图
+        function loadHomeView() {
+            const mainContent = document.getElementById('mainContent');
+            let content = ``;
+            
+            // 根据角色显示内容
+            if (currentUser.role === 'leader') {
+                content = `
+                    <!-- AI智能助手（仅领导可见） -->
+                    <div class="card" style="margin: 0; min-height: calc(100vh - 100px);">
+                        <div style="border-radius: 15px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.1); height: 100%;">
+                            <iframe src="/ai-chat.html" style="width: 100%; height: calc(100vh - 140px); border: none;"></iframe>
+                        </div>
+                    </div>
+                `;
+            } else {
+                content = `
+                    <div class="content-header">
+                        <h1 class="content-title">欢迎使用运营管理系统</h1>
+                        <p class="content-subtitle">请使用左侧菜单访问相关功能</p>
+                    </div>
+                `;
+            }
+            
+            mainContent.innerHTML = content;
+        }
+        
+        // 加载Excel匹配工具
+        function loadExcelMatchView() {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="content-header">
+                    <h1 class="content-title">Excel匹配工具</h1>
+                    <p class="content-subtitle">上传并处理注册数据文件</p>
+                </div>
+                <div class="card">
+                    <iframe src="/index.html" style="width: 100%; height: 800px; border: none; border-radius: 10px;"></iframe>
+                </div>
+            `;
+        }
+
+        // 加载日活分析工具
+        function loadDailyActiveAnalysisView() {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="content-header">
+                    <h1 class="content-title">日活分析</h1>
+                    <p class="content-subtitle">用户日活跃数据分析与多工具使用统计</p>
+                </div>
+                <div class="card">
+                    <iframe src="/daily-active-analysis.html" style="width: 100%; height: 900px; border: none; border-radius: 10px;"></iframe>
+                </div>
+            `;
+        }
+        
+        // 加载用户管理界面
+        function loadUserManagementView() {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="content-header">
+                    <h1 class="content-title">用户管理</h1>
+                    <p class="content-subtitle">管理系统用户、角色和权限</p>
+                </div>
+                <div class="card">
+                    <iframe src="/user-management.html" style="width: 100%; height: 900px; border: none; border-radius: 10px;"></iframe>
+                </div>
+            `;
+        }
+        
+        // 加载个人信息视图
+        function loadProfileView() {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="content-header">
+                    <h1 class="content-title">个人信息</h1>
+                    <p class="content-subtitle">查看您的账户信息</p>
+                </div>
+                <div class="card">
+                    <h2 class="card-title">基本信息</h2>
+                    <div style="display: grid; gap: 15px; max-width: 500px;">
+                        <div>
+                            <label style="color: #666; font-size: 0.9rem;">用户名</label>
+                            <div style="font-size: 1.1rem; font-weight: 600;">${currentUser.username}</div>
+                        </div>
+                        <div>
+                            <label style="color: #666; font-size: 0.9rem;">真实姓名</label>
+                            <div style="font-size: 1.1rem; font-weight: 600;">${currentUser.real_name}</div>
+                        </div>
+                        <div>
+                            <label style="color: #666; font-size: 0.9rem;">角色</label>
+                            <div style="font-size: 1.1rem; font-weight: 600;">${getRoleDisplayName(currentUser.role)}</div>
+                        </div>
+                        <div>
+                            <label style="color: #666; font-size: 0.9rem;">部门</label>
+                            <div style="font-size: 1.1rem; font-weight: 600;">${currentUser.department}</div>
+                        </div>
+                        <div>
+                            <label style="color: #666; font-size: 0.9rem;">权限</label>
+                            <div style="font-size: 0.9rem; color: #666;">
+                                ${currentUser.permissions.join(', ')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 加载报表视图（领导专用）
+        function loadReportsView() {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="content-header">
+                    <h1 class="content-title">数据报表</h1>
+                    <p class="content-subtitle">查看部门整体数据统计</p>
+                </div>
+                <div class="card">
+                    <h2 class="card-title">本月数据概览</h2>
+                    <p>报表功能正在开发中...</p>
+                </div>
+            `;
+        }
+        
+        // 加载即将推出视图
+        function loadComingSoonView(view) {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="content-header">
+                    <h1 class="content-title">${getViewName(view)}</h1>
+                    <p class="content-subtitle">功能开发中</p>
+                </div>
+                <div class="card">
+                    <div style="text-align: center; padding: 50px; color: #999;">
+                        <i style="font-size: 4rem; margin-bottom: 20px; display: block;">🚧</i>
+                        <h3 style="color: #666;">功能正在开发中</h3>
+                        <p>此功能即将推出，敬请期待！</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 获取视图显示名称
+        function getViewName(view) {
+            const viewNames = {
+                'home': '首页',
+                'profile': '个人信息',
+                'excel-match': 'Excel匹配工具',
+                'daily-active-analysis': '日活分析',
+                'reports': '数据报表',
+                'users': '用户管理',
+                'system': '系统设置',
+                'employees': '员工管理',
+                'analytics': '数据分析',
+                'my-data': '我的数据',
+                'history': '操作历史'
+            };
+            return viewNames[view] || view;
+        }
+        
+        // 退出登录
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login.html';
+            }
+        }
+        
+        // 移动端侧边栏切换
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('active');
+        }
+        
+        // 点击主内容区域时隐藏移动端侧边栏
+        document.addEventListener('click', function(e) {
+            const sidebar = document.getElementById('sidebar');
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+            
+            if (window.innerWidth <= 768 && 
+                !sidebar.contains(e.target) && 
+                !mobileMenuBtn.contains(e.target)) {
+                sidebar.classList.remove('active');
+            }
+        });
+        
+        // 窗口大小改变时重置侧边栏状态
+        window.addEventListener('resize', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (window.innerWidth > 768) {
+                sidebar.classList.remove('active');
+            }
+        });
+        
+        // 页面加载完成后初始化
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html> 

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>颛顼 - 登录</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .login-header h1 {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .login-header p {
+            color: #666;
+            font-size: 1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .login-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            text-align: center;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            text-align: center;
+        }
+        
+        .demo-info {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .demo-info h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        
+        .demo-info ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .demo-info li {
+            margin: 5px 0;
+            padding: 5px 10px;
+            background: white;
+            border-radius: 5px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+            display: none;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>🏢 颛顼</h1>
+            <p>请登录以继续</p>
+        </div>
+        
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">用户名</label>
+                <input type="text" id="username" name="username" required autocomplete="username">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" name="password" required autocomplete="current-password">
+            </div>
+            
+            <button type="submit" class="login-btn" id="loginBtn">
+                登录
+                <span class="loading" id="loading"></span>
+            </button>
+        </form>
+        
+        <div class="demo-info">
+            <h3>测试账号：</h3>
+            <ul>
+                <li>管理员：admin / admin123</li>
+                <li>领导：leader1 / leader123</li>
+                <li>员工：zhangtongyi / zt123456</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        // 动态获取API基础地址
+        function getApiBaseUrl() {
+            // 如果是通过frp访问（检测端口8080），则使用当前主机的8080端口
+            if (window.location.port === '8080') {
+                return `${window.location.protocol}//${window.location.hostname}:8080`;
+            }
+            // 否则使用当前主机的5000端口（本地开发）
+            return `${window.location.protocol}//${window.location.hostname}:5000`;
+        }
+
+        const API_BASE_URL = getApiBaseUrl();
+        console.log('API Base URL:', API_BASE_URL);
+
+        // 初始化用户（仅在开发环境）
+        async function initUsers() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/auth/init-users`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                console.log('初始化用户:', data);
+            } catch (error) {
+                console.log('初始化用户失败，可能用户已存在');
+            }
+        }
+        
+        // 页面加载时初始化用户
+        window.addEventListener('DOMContentLoaded', initUsers);
+        
+        // 登录表单处理
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            
+            // 隐藏消息
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+            
+            // 显示加载状态
+            loginBtn.disabled = true;
+            loading.style.display = 'inline-block';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // 保存令牌和用户信息
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    // 显示成功消息
+                    successMessage.textContent = '登录成功，正在跳转...';
+                    successMessage.style.display = 'block';
+                    
+                    // 跳转到主页
+                    setTimeout(() => {
+                        window.location.href = '/dashboard.html';
+                    }, 1000);
+                } else {
+                    // 显示错误消息
+                    errorMessage.textContent = data.message || '登录失败';
+                    errorMessage.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('登录错误:', error);
+                errorMessage.textContent = '网络错误，请确保后端服务已启动';
+                errorMessage.style.display = 'block';
+            } finally {
+                // 恢复按钮状态
+                loginBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        });
+        
+        // 检查是否已登录
+        const token = localStorage.getItem('token');
+        if (token) {
+            // 验证令牌是否有效
+            fetch(`${API_BASE_URL}/api/auth/verify`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            }).then(response => {
+                if (response.ok) {
+                    // 已登录，跳转到主页
+                    window.location.href = '/dashboard.html';
+                } else {
+                    // 令牌无效，清除本地存储
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                }
+            });
+        }
+    </script>
+</body>
+</html> 
